@@ -3813,7 +3813,7 @@ void P_PlayerRingBurst(player_t *player, INT32 num_rings)
 		P_PlayerEmeraldBurst(player, false);
 
 	// Spill weapons first
-	P_PlayerWeaponPanelOrAmmoBurst(player);
+	//P_PlayerWeaponPanelOrAmmoBurst(player);
 
 	if (abs(player->mo->momx) > player->mo->scale || abs(player->mo->momy) > player->mo->scale)
 		va = R_PointToAngle2(player->mo->momx, player->mo->momy, 0, 0)>>ANGLETOFINESHIFT;
