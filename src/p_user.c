@@ -4064,6 +4064,8 @@ static void P_DoFiring(player_t *player, ticcmd_t *cmd)
 	// Rail ring
 	else if (player->currentweapon == WEP_RAIL && player->powers[pw_railring])
 	{
+		angle_t shotangle = player->mo->angle;
+		
 		P_DrainWeaponAmmo(player, pw_railring);
 		P_SetWeaponDelay(player, (3*TICRATE)/2);
 
