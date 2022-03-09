@@ -4074,10 +4074,10 @@ static void P_DoFiring(player_t *player, ticcmd_t *cmd)
 			shotangle = R_PointToAngle2(player->mo->x, player->mo->y, mo->x, mo->y);
 		
 		// Left
-		mo = P_SPMAngle(player->mo, MT_REDRING, shotangle-ANG2, true, MF2_RAILRING|MF2_DONTDRAW);
+		mo = P_SPMAngle(player->mo, MT_REDRING, shotangle-ANG2, true, MF2_RAILRING);
 
 		// Right
-		mo = P_SPMAngle(player->mo, MT_REDRING, shotangle+ANG2, true, MF2_RAILRING|MF2_DONTDRAW);
+		mo = P_SPMAngle(player->mo, MT_REDRING, shotangle+ANG2, true, MF2_RAILRING);
 
 		// Rail has no unique thrown object, therefore its sound plays here.
 		S_StartSound(player->mo, sfx_rail1);
