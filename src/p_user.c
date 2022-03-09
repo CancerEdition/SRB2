@@ -4085,11 +4085,21 @@ static void P_DoFiring(player_t *player, ticcmd_t *cmd)
 	// Automatic
 	else if (player->currentweapon == WEP_AUTO && player->powers[pw_automaticring])
 	{
+		angle_t shotangle = player->mo->angle;
+
 		P_DrainWeaponAmmo(player, pw_automaticring);
 		player->pflags &= ~PF_ATTACKDOWN;
 		P_SetWeaponDelay(player, 2);
 
 		mo = P_SpawnPlayerMissile(player->mo, MT_THROWNAUTOMATIC, MF2_AUTOMATIC);
+		if (mo)
+			shotangle = R_PointToAngle2(player->mo->x, player->mo->y, mo->x, mo->y);
+
+		// Left
+		mo = P_SPMAngle(player->mo, MT_THROWNAUTOMATIC, shotangle - ANG2, true, MF2_AUTOMATIC);
+
+		// Right
+		mo = P_SPMAngle(player->mo, MT_THROWNAUTOMATIC, shotangle + ANG2, true, MF2_AUTOMATIC);
 	}
 	// Explosion
 	else if (player->currentweapon == WEP_EXPLODE && player->powers[pw_explosionring])
