@@ -4068,6 +4068,14 @@ static void P_DoFiring(player_t *player, ticcmd_t *cmd)
 		P_SetWeaponDelay(player, (3*TICRATE)/2);
 
 		mo = P_SpawnPlayerMissile(player->mo, MT_REDRING, MF2_RAILRING|MF2_DONTDRAW);
+		if (mo)
+			shotangle = R_PointToAngle2(player->mo->x, player->mo->y, mo->x, mo->y);
+		
+		// Left
+		mo = P_SPMAngle(player->mo, MT_REDRING, shotangle-ANG2, true, MF2_RAILRING|MF2_DONTDRAW);
+
+		// Right
+		mo = P_SPMAngle(player->mo, MT_REDRING, shotangle+ANG2, true, MF2_RAILRING|MF2_DONTDRAW);
 
 		// Rail has no unique thrown object, therefore its sound plays here.
 		S_StartSound(player->mo, sfx_rail1);
