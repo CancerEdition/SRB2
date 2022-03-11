@@ -20,6 +20,7 @@
 #include "s_sound.h"
 #include "r_main.h"
 #include "st_stuff.h"
+#include "r_skins.h"
 #include "hu_stuff.h"
 #include "lua_hook.h"
 #include "m_cond.h" // unlockables, emblems, etc
@@ -283,7 +284,7 @@ void P_DoMatchSuper(player_t *player)
 	if (doteams)
 		for (i = 0; i < MAXPLAYERS; i++)
 			if (playeringame[i] && players[i].ctfteam == player->ctfteam
-			&& players[i].powers[pw_emeralds] != 0)
+				&& players[i].powers[pw_emeralds] != 0)
 			{
 				players[i].powers[pw_emeralds] = 0;
 				player->powers[pw_invulnerability] = invulntics + 1;
@@ -298,6 +299,28 @@ void P_DoMatchSuper(player_t *player)
 					S_ChangeMusicInternal((mariomode) ? "_minv" : "_inv", false);
 				}
 			}
+}
+
+void P_DoMatchSuper2(player_t* player)
+{
+	UINT16 match_emeralds = player->powers[pw_emeralds];
+
+	// If this gametype has teams, check every player on your team for emeralds.
+	//if (G_GametypeHasTeams())
+	//{
+		//doteams = true;
+		//for (i = 0; i < MAXPLAYERS; i++)
+			//if (players[i].ctfteam == player->ctfteam)
+				//match_emeralds |= players[i].powers[pw_emeralds];
+	//}
+
+	if (!ALL7EMERALDS(match_emeralds))
+		return;
+
+	// Got 'em all? Turn "super"!
+	if (P_SuperReady(player))
+		P_DoSuperTransformation(player, false);
+
 }
 
 /** Takes action based on a ::MF_SPECIAL thing touched by a player.
@@ -707,7 +730,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher, boolean heightcheck)
 			if (special->threshold)
 			{
 				player->powers[pw_emeralds] |= special->info->speed;
-				P_DoMatchSuper(player);
+				//P_SuperReady(player);
 			}
 			else
 			{
@@ -732,7 +755,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher, boolean heightcheck)
 				return;
 
 			player->powers[pw_emeralds] |= special->threshold;
-			P_DoMatchSuper(player);
+			//P_SuperReady(player);
 			break;
 
 		// Secret emblem thingy

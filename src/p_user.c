@@ -3966,18 +3966,35 @@ teeterdone:
 //
 // P_SetWeaponDelay
 //
-// Sets weapon delay.  Properly accounts for Knux's firing rate bonus.
+// Sets weapon delay.  Accounts for each character's ring delays
 //
 static void P_SetWeaponDelay(player_t *player, INT32 delay)
 {
 	player->weapondelay = delay;
 
-	if (player->skin == 2) // Knuckles
+	if (player->skin == 2) // Tails
 	{
-		// Multiply before dividing.
+		// Tails should have longer delay
+		player->weapondelay *= 17;
+		player->weapondelay /= 10;
+	}
+	else if (player->skin == 2) // Knuckles
+	{
 		// Loss of precision can make a surprisingly large difference.
 		player->weapondelay *= 2;
 		player->weapondelay /= 3;
+	}
+	else if (player->skin == 2) // Amy
+	{
+		// Amy should have less delay?
+		player->weapondelay *= 16;
+		player->weapondelay /= 10;
+	}
+	else if (player->skin == 2) // Fang
+	{
+		// Fang should have slightly longer delay
+		player->weapondelay *= 18;
+		player->weapondelay /= 10;
 	}
 }
 
@@ -4053,7 +4070,7 @@ static void P_DoFiring(player_t *player, ticcmd_t *cmd)
 	// Bounce ring
 	else if (player->currentweapon == WEP_BOUNCE && player->powers[pw_bouncering])
 	{
-		P_DrainWeaponAmmo(player, pw_bouncering);
+		//P_DrainWeaponAmmo(player, pw_bouncering);
 		P_SetWeaponDelay(player, TICRATE/4);
 
 		mo = P_SpawnPlayerMissile(player->mo, MT_THROWNBOUNCE, MF2_BOUNCERING);
@@ -4064,20 +4081,26 @@ static void P_DoFiring(player_t *player, ticcmd_t *cmd)
 	// Rail ring
 	else if (player->currentweapon == WEP_RAIL && player->powers[pw_railring])
 	{
-		angle_t shotangle = player->mo->angle;
-		
-		P_DrainWeaponAmmo(player, pw_railring);
+		//angle_t shotangle = player->mo->angle;
+
+		//P_DrainWeaponAmmo(player, pw_railring);
 		P_SetWeaponDelay(player, (3*TICRATE)/2);
 
 		mo = P_SpawnPlayerMissile(player->mo, MT_REDRING, MF2_RAILRING|MF2_DONTDRAW);
-		if (mo)
-			shotangle = R_PointToAngle2(player->mo->x, player->mo->y, mo->x, mo->y);
-		
-		// Left
-		mo = P_SPMAngle(player->mo, MT_REDRING, shotangle-ANG2, true, MF2_RAILRING);
+		if (player->skin == 4) //Fang
+		{
+			/*if (mo)
+				shotangle = R_PointToAngle2(player->mo->x, player->mo->y, mo->x, mo->y);
 
-		// Right
-		mo = P_SPMAngle(player->mo, MT_REDRING, shotangle+ANG2, true, MF2_RAILRING);
+			// Left
+			mo = P_SPMAngle(player->mo, MT_REDRING, shotangle - ANG2, true, 0);
+
+			// Right
+			mo = P_SPMAngle(player->mo, MT_REDRING, shotangle + ANG2, true, 0);
+
+			if (mo)
+				P_ColorTeamMissile(mo, player);*/
+		}
 
 		// Rail has no unique thrown object, therefore its sound plays here.
 		S_StartSound(player->mo, sfx_rail1);
@@ -4087,32 +4110,48 @@ static void P_DoFiring(player_t *player, ticcmd_t *cmd)
 	{
 		angle_t shotangle = player->mo->angle;
 
-		P_DrainWeaponAmmo(player, pw_automaticring);
+		//P_DrainWeaponAmmo(player, pw_automaticring);
 		player->pflags &= ~PF_ATTACKDOWN;
 		P_SetWeaponDelay(player, 2);
 
 		mo = P_SpawnPlayerMissile(player->mo, MT_THROWNAUTOMATIC, MF2_AUTOMATIC);
-		if (mo)
-			shotangle = R_PointToAngle2(player->mo->x, player->mo->y, mo->x, mo->y);
+		if (player->skin == 4) //Fang
+		{
+			if (mo)
+				shotangle = R_PointToAngle2(player->mo->x, player->mo->y, mo->x, mo->y);
 
-		// Left
-		mo = P_SPMAngle(player->mo, MT_THROWNAUTOMATIC, shotangle - ANG2, true, MF2_AUTOMATIC);
+			// Left
+			mo = P_SPMAngle(player->mo, MT_THROWNAUTOMATIC, shotangle - ANG2, true, MF2_AUTOMATIC);
 
-		// Right
-		mo = P_SPMAngle(player->mo, MT_THROWNAUTOMATIC, shotangle + ANG2, true, MF2_AUTOMATIC);
+			// Right
+			mo = P_SPMAngle(player->mo, MT_THROWNAUTOMATIC, shotangle + ANG2, true, MF2_AUTOMATIC);
+		}
 	}
 	// Explosion
 	else if (player->currentweapon == WEP_EXPLODE && player->powers[pw_explosionring])
 	{
-		P_DrainWeaponAmmo(player, pw_explosionring);
+		angle_t shotangle = player->mo->angle;
+
+		//P_DrainWeaponAmmo(player, pw_explosionring);
 		P_SetWeaponDelay(player, (3*TICRATE)/2);
 
 		mo = P_SpawnPlayerMissile(player->mo, MT_THROWNEXPLOSION, MF2_EXPLOSION);
+		if (player->skin == 4) //Fang
+		{
+			if (mo)
+				shotangle = R_PointToAngle2(player->mo->x, player->mo->y, mo->x, mo->y);
+
+			// Left
+			mo = P_SPMAngle(player->mo, MT_THROWNEXPLOSION, shotangle - ANG2, true, MF2_EXPLOSION);
+
+			// Right
+			mo = P_SPMAngle(player->mo, MT_THROWNEXPLOSION, shotangle + ANG2, true, MF2_EXPLOSION);
+		}
 	}
 	// Grenade
 	else if (player->currentweapon == WEP_GRENADE && player->powers[pw_grenadering])
 	{
-		P_DrainWeaponAmmo(player, pw_grenadering);
+		//P_DrainWeaponAmmo(player, pw_grenadering);
 		P_SetWeaponDelay(player, TICRATE/3);
 
 		mo = P_SpawnPlayerMissile(player->mo, MT_THROWNGRENADE, MF2_EXPLOSION);
@@ -4131,7 +4170,7 @@ static void P_DoFiring(player_t *player, ticcmd_t *cmd)
 		angle_t shotangle = player->mo->angle;
 		angle_t oldaiming = player->aiming;
 
-		P_DrainWeaponAmmo(player, pw_scatterring);
+		//P_DrainWeaponAmmo(player, pw_scatterring);
 		P_SetWeaponDelay(player, (2*TICRATE)/3);
 
 		// Center
@@ -4229,6 +4268,7 @@ static void P_DoSuperStuff(player_t *player)
 {
 	mobj_t *spark;
 	ticcmd_t *cmd = &player->cmd;
+	UINT16 match_emeralds = player->powers[pw_emeralds];
 	if (player->mo->state >= &states[S_PLAY_SUPER_TRANS1]
 	&& player->mo->state < &states[S_PLAY_SUPER_TRANS6])
 		return; // don't do anything right now, we're in the middle of transforming!
@@ -4239,7 +4279,7 @@ static void P_DoSuperStuff(player_t *player)
 	if (player->powers[pw_super])
 	{
 		// If you're super and not Sonic, de-superize!
-		if (!(ALL7EMERALDS(emeralds) && player->charflags & SF_SUPER))
+		if (!ALL7EMERALDS(match_emeralds))
 		{
 			player->powers[pw_super] = 0;
 			P_SetPlayerMobjState(player->mo, S_PLAY_STND);
@@ -4352,11 +4392,11 @@ boolean P_SuperReady(player_t *player)
 	if (!player->powers[pw_super]
 	&& !player->powers[pw_invulnerability]
 	&& !player->powers[pw_tailsfly]
-	&& (player->charflags & SF_SUPER)
+	//&& (player->charflags & SF_SUPER)
 	&& (player->pflags & PF_JUMPED)
 	&& !(player->powers[pw_shield] & SH_NOSTACK)
 	&& !(maptol & TOL_NIGHTS)
-	&& ALL7EMERALDS(emeralds)
+	&& ALL7EMERALDS(player->powers[pw_emeralds])
 	&& (player->rings >= 50))
 		return true;
 
@@ -9209,6 +9249,9 @@ mobj_t *P_LookForEnemies(player_t *player, boolean nonenemies, boolean bullet)
 			continue;
 
 		if (mo->health <= 0) // dead
+			continue;
+
+		if ((mo->type == MT_RING_REDBOX && player->ctfteam == 2)||(mo->type == MT_RING_BLUEBOX && player->ctfteam == 1)) // ctf monitors
 			continue;
 
 		if (!((mo->flags & (MF_ENEMY|MF_BOSS|MF_MONITOR) && (mo->flags & MF_SHOOTABLE)) || (mo->flags & MF_SPRING)) == !(mo->flags2 & MF2_INVERTAIMABLE)) // allows if it has the flags desired XOR it has the invert aimable flag
