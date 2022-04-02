@@ -1578,7 +1578,7 @@ static boolean PIT_CheckThing(mobj_t *thing)
 
 	// Damage other players when invincible
 	if (tmthing->player && thing->player
-	// Make sure they aren't able to damage you ANYWHERE along the Z axis, you have to be TOUCHING the person.
+		// Make sure they aren't able to damage you ANYWHERE along the Z axis, you have to be TOUCHING the person.
 		&& !(thing->z + thing->height < tmthing->z || thing->z > tmthing->z + tmthing->height))
 	{
 		if (G_RingSlingerGametype() && (!G_GametypeHasTeams() || tmthing->player->ctfteam != thing->player->ctfteam))
@@ -1599,6 +1599,24 @@ static boolean PIT_CheckThing(mobj_t *thing)
 				P_DamageMobj(thing, tmthing, tmthing, 1, 0);
 			else if ((thing->player->pflags & PF_TAGIT) && !(tmthing->player->pflags & PF_TAGIT))
 				P_DamageMobj(tmthing, thing, tmthing, 1, 0);
+		}
+
+		//AMY MELEE ATTACKs
+		if (G_RingSlingerGametype() && (!G_GametypeHasTeams() || tmthing->player->ctfteam != thing->player->ctfteam))
+		{
+			if ((tmthing->player->charability2 == CA2_MELEE) && ((tmthing->player->panim == PA_ABILITY2) || (tmthing->player->panim == PA_ABILITY)))
+			{
+				//Checks if player is facing other player 
+				P_DamageMobj(thing, tmthing, tmthing, 1, 0);
+				//tmthing->flags2 |= MF2_EXPLOSION;
+				//S_StartSound(thing, sfx_s3k8b);
+			}
+			else if ((thing->player->charability2 == CA2_MELEE) && ((thing->player->panim == PA_ABILITY2) || (thing->player->panim == PA_ABILITY)))
+			{
+				P_DamageMobj(tmthing, thing, thing, 1, 0);
+				//thing->flags2 |= MF2_EXPLOSION;
+				//S_StartSound(tmthing, sfx_s3k8b);
+			}
 		}
 	}
 

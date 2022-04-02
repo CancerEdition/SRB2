@@ -439,13 +439,13 @@ INT32 player_name_changes[MAXPLAYERS];
 
 INT16 rw_maximums[NUM_WEAPONS] =
 {
-	800, // MAX_INFINITY
-	400, // MAX_AUTOMATIC
-	100, // MAX_BOUNCE
-	50,  // MAX_SCATTER
-	100, // MAX_GRENADE
-	50,  // MAX_EXPLOSION
-	50   // MAX_RAIL
+	20, // MAX_INFINITY (changed from 800 for timer)
+	25, // MAX_AUTOMATIC (changed from 400 for timer)
+	20, // MAX_BOUNCE (changed from 100 for timer)
+	25,  // MAX_SCATTER (changed from 50 for timer)
+	20, // MAX_GRENADE (changed from 100 for timer)
+	15,  // MAX_EXPLOSION (changed from 50 for timer)
+	15   // MAX_RAIL (changed from 50 for timer)
 };
 
 // Allocation for time and nights data

@@ -3126,8 +3126,8 @@ static boolean P_TagDamage(mobj_t *target, mobj_t *inflictor, mobj_t *source, IN
 		return false;
 	}
 
-	if (inflictor->type == MT_LHRT)
-		return false;
+	//if (inflictor->type == MT_LHRT)
+		//return false;
 
 	// The tag occurs so long as you aren't shooting another tagger with friendlyfire on.
 	if (source->player->pflags & PF_TAGIT && !(player->pflags & PF_TAGIT))
@@ -3183,9 +3183,9 @@ static boolean P_TagDamage(mobj_t *target, mobj_t *inflictor, mobj_t *source, IN
 	return true;
 }
 
-static boolean P_PlayerHitsPlayer(mobj_t *target, mobj_t *inflictor, mobj_t *source, INT32 damage, UINT8 damagetype)
+static boolean P_PlayerHitsPlayer(mobj_t* target, mobj_t* inflictor, mobj_t* source, INT32 damage, UINT8 damagetype)
 {
-	player_t *player = target->player;
+	player_t* player = target->player;
 
 	if (!(damagetype & DMG_CANHURTSELF))
 	{
@@ -3227,7 +3227,7 @@ static boolean P_PlayerHitsPlayer(mobj_t *target, mobj_t *inflictor, mobj_t *sou
 					S_StartSound(target, mobjinfo[MT_PITY_ICON].seesound);
 				}
 			}
-			else if (!(inflictor->flags & MF_FIRE))
+			else if ((!(inflictor->flags & MF_FIRE)) && source->player->skin == 3) //Only Amy is allowed to heal now
 				P_GivePlayerRings(target->player, 1);
 			if (inflictor->flags2 & MF2_BOUNCERING)
 				inflictor->fuse = 0; // bounce ring disappears at -1 not 0
@@ -3238,6 +3238,28 @@ static boolean P_PlayerHitsPlayer(mobj_t *target, mobj_t *inflictor, mobj_t *sou
 
 	if (inflictor->type == MT_LHRT)
 		return false;
+
+	if (player->powers[pw_super]) //Super is die
+	{
+		switch (source->player->skin)
+		{
+		case 2: //Knuckles
+			player->rings -= 15;
+			break;
+		case 3: //Amy
+			player->rings -= 5;
+			break;
+		default: //Everybody else
+			player->rings -= 10;
+			break;
+		}
+		P_PlayRinglossSound(target);
+	}
+
+	//if ((inflictor == source) && (source->player->skin == 3) && ((source->player->panim == PA_ABILITY2) || (source->player->panim == PA_ABILITY)))
+	//{
+		//S_StartSound(target, sfx_s3k8b);
+	//}
 
 	// Add pity.
 	if (!player->powers[pw_flashing] && !player->powers[pw_invulnerability] && !player->powers[pw_super]

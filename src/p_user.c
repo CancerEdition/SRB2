@@ -996,6 +996,35 @@ void P_DoPlayerPain(player_t *player, mobj_t *source, mobj_t *inflictor)
 	{
 		angle_t ang;
 		fixed_t fallbackspeed;
+		fixed_t charactermultiplier;
+
+		charactermultiplier = 10;
+
+		switch (player->skin)
+		{
+		case 0: //Sonic
+			charactermultiplier = 6;
+			break;
+		case 1: //Tails
+			charactermultiplier = 5;
+			break;
+		case 2: //Knuckles
+			charactermultiplier = 3;
+			break;
+		case 3: //Amy
+			charactermultiplier = 5;
+			break;
+		case 4: //Fang
+			charactermultiplier = 2;
+			break;
+		case 5: //MS
+			charactermultiplier = 4;
+			break;
+		default:
+			charactermultiplier = 6; //probably for mods
+			break;
+		}
+			
 
 		P_ResetPlayer(player);
 		P_SetPlayerMobjState(player->mo, player->mo->info->painstate);
@@ -1023,29 +1052,39 @@ void P_DoPlayerPain(player_t *player, mobj_t *source, mobj_t *inflictor)
 			{
 				fixed_t dist = P_AproxDistance(P_AproxDistance(source->x-player->mo->x, source->y-player->mo->y), source->z-player->mo->z);
 
-				dist = FixedMul(128*FRACUNIT, inflictor->scale) - dist/4;
+				//dist = FixedMul(128*FRACUNIT, inflictor->scale) - dist/4;
+				dist = FixedMul(((charactermultiplier*45)*FRACUNIT), inflictor->scale) - dist / 4;
 
-				if (dist < FixedMul(4*FRACUNIT, inflictor->scale))
-					dist = FixedMul(4*FRACUNIT, inflictor->scale);
+				if (dist < FixedMul(((charactermultiplier*1)*FRACUNIT), inflictor->scale))
+					dist = FixedMul(((charactermultiplier*1)*FRACUNIT), inflictor->scale);
+
+				if (dist > FixedMul(128*FRACUNIT, inflictor->scale)) //WOOSH
+					dist = FixedMul(128*FRACUNIT, inflictor->scale);
 
 				fallbackspeed = dist;
 			}
 			else if (inflictor->flags2 & MF2_EXPLOSION)
 			{
 				if (inflictor->flags2 & MF2_RAILRING)
-					fallbackspeed = FixedMul(38*FRACUNIT, inflictor->scale); // 7x
+					//fallbackspeed = FixedMul(38*FRACUNIT, inflictor->scale); // 7x
+					fallbackspeed = FixedMul(((charactermultiplier*9)*FRACUNIT), inflictor->scale);
 				else
-					fallbackspeed = FixedMul(30*FRACUNIT, inflictor->scale); // 5x
+					//fallbackspeed = FixedMul(30*FRACUNIT, inflictor->scale); // 5x
+					fallbackspeed = FixedMul(((charactermultiplier*7)*FRACUNIT), inflictor->scale);
 			}
 			else if (inflictor->flags2 & MF2_RAILRING)
-				fallbackspeed = FixedMul(45*FRACUNIT, inflictor->scale); // 4x
+				//fallbackspeed = FixedMul(45*FRACUNIT, inflictor->scale); // 4x
+				fallbackspeed = FixedMul(((charactermultiplier*10)*FRACUNIT), inflictor->scale);
+			else if ((inflictor == source) && (source->player->skin == 3) && ((source->player->panim == PA_ABILITY2) || (source->player->panim == PA_ABILITY)))
+				fallbackspeed = FixedMul(((charactermultiplier*5)*FRACUNIT), inflictor->scale);
 			else
-				fallbackspeed = FixedMul(4*FRACUNIT, inflictor->scale); // the usual amount of force
+				//fallbackspeed = FixedMul(4*FRACUNIT, inflictor->scale); // the usual amount of force
+				fallbackspeed = FixedMul(((charactermultiplier*1)*FRACUNIT), inflictor->scale);
 		}
 		else
 		{
 			ang = ((player->mo->momx || player->mo->momy) ? R_PointToAngle2(player->mo->momx, player->mo->momy, 0, 0) : player->drawangle);
-			fallbackspeed = FixedMul(4*FRACUNIT, player->mo->scale);
+			fallbackspeed = FixedMul(((charactermultiplier*1)*FRACUNIT), inflictor->scale);
 		}
 
 		if (player->pflags & PF_DIRECTIONCHAR)
@@ -3972,29 +4011,36 @@ static void P_SetWeaponDelay(player_t *player, INT32 delay)
 {
 	player->weapondelay = delay;
 
-	if (player->skin == 2) // Tails
+	if (player->skin == 1) // Tails
 	{
 		// Tails should have longer delay
-		player->weapondelay *= 17;
-		player->weapondelay /= 10;
+		player->weapondelay *= 4;
+		player->weapondelay /= 3;
+		//player->weapondelay *= 17;
+		//player->weapondelay /= 10;
 	}
+
 	else if (player->skin == 2) // Knuckles
 	{
 		// Loss of precision can make a surprisingly large difference.
 		player->weapondelay *= 2;
 		player->weapondelay /= 3;
 	}
-	else if (player->skin == 2) // Amy
+
+	else if (player->skin == 3) // Amy
 	{
 		// Amy should have less delay?
 		player->weapondelay *= 16;
 		player->weapondelay /= 10;
 	}
-	else if (player->skin == 2) // Fang
+
+	else if (player->skin == 4) // Fang
 	{
 		// Fang should have slightly longer delay
-		player->weapondelay *= 18;
-		player->weapondelay /= 10;
+		player->weapondelay *= 5;
+		player->weapondelay /= 3;
+		//player->weapondelay *= 18;
+		//player->weapondelay /= 10;
 	}
 }
 
@@ -4046,15 +4092,15 @@ static void P_DoFiring(player_t *player, ticcmd_t *cmd)
 		return;
 	}
 
-	if (player->pflags & PF_ATTACKDOWN || player->climbing || (G_TagGametype() && !(player->pflags & PF_TAGIT)))
-		return;
+	if (player->pflags & PF_ATTACKDOWN || player->climbing || (G_TagGametype() && !(player->pflags & PF_TAGIT)) || P_PlayerInPain(player) || player->rings <= 0) //Added inability to shoot when you have no rings and in hurt state
+		return; //specifically when you're actually knocked back not when you're flashing
 
 	if (((player->powers[pw_shield] & SH_STACK) == SH_FIREFLOWER) && !(player->weapondelay))
 	{
 		player->pflags |= PF_ATTACKDOWN;
 		mo = P_SpawnPlayerMissile(player->mo, MT_FIREBALL, 0);
 		if (mo)
-			P_InstaThrust(mo, player->mo->angle, ((mo->info->speed>>FRACBITS)*player->mo->scale) + player->speed);
+		P_InstaThrust(mo, player->mo->angle, ((mo->info->speed>>FRACBITS)*player->mo->scale) + player->speed);
 		S_StartSound(player->mo, sfx_mario7);
 		P_SetWeaponDelay(player, TICRATE); // Short delay between fireballs so you can't spam them everywhere
 		return;
@@ -4071,17 +4117,34 @@ static void P_DoFiring(player_t *player, ticcmd_t *cmd)
 	else if (player->currentweapon == WEP_BOUNCE && player->powers[pw_bouncering])
 	{
 		//P_DrainWeaponAmmo(player, pw_bouncering);
+		angle_t shotangle = player->mo->angle;
 		P_SetWeaponDelay(player, TICRATE/4);
 
 		mo = P_SpawnPlayerMissile(player->mo, MT_THROWNBOUNCE, MF2_BOUNCERING);
 
 		if (mo)
 			mo->fuse = 3*TICRATE; // Bounce Ring time
+
+		if (player->skin == 4) //Fang
+		{
+			if (mo)
+				shotangle = R_PointToAngle2(player->mo->x, player->mo->y, mo->x, mo->y);
+
+			// Left
+			mo = P_SPMAngle(player->mo, MT_THROWNBOUNCE, shotangle - ANG2, true, MF2_BOUNCERING);
+
+			// Right
+			mo = P_SPMAngle(player->mo, MT_THROWNBOUNCE, shotangle + ANG2, true, MF2_BOUNCERING);
+
+			player->rings--;
+		}
+
+		player->rings--;
 	}
 	// Rail ring
 	else if (player->currentweapon == WEP_RAIL && player->powers[pw_railring])
 	{
-		//angle_t shotangle = player->mo->angle;
+		angle_t shotangle = player->mo->angle;
 
 		//P_DrainWeaponAmmo(player, pw_railring);
 		P_SetWeaponDelay(player, (3*TICRATE)/2);
@@ -4089,21 +4152,22 @@ static void P_DoFiring(player_t *player, ticcmd_t *cmd)
 		mo = P_SpawnPlayerMissile(player->mo, MT_REDRING, MF2_RAILRING|MF2_DONTDRAW);
 		if (player->skin == 4) //Fang
 		{
-			/*if (mo)
-				shotangle = R_PointToAngle2(player->mo->x, player->mo->y, mo->x, mo->y);
+			//if (mo)
+				//shotangle = R_PointToAngle2(player->mo->x, player->mo->y, mo->x, mo->y);
 
-			// Left
-			mo = P_SPMAngle(player->mo, MT_REDRING, shotangle - ANG2, true, 0);
+			 // Left
+				//mo = P_SPMAngle(player->mo, MT_REDRING, shotangle - ANG2, true, MF2_RAILRING|MF2_DONTDRAW);
 
 			// Right
-			mo = P_SPMAngle(player->mo, MT_REDRING, shotangle + ANG2, true, 0);
+				//mo = P_SPMAngle(player->mo, MT_REDRING, shotangle + ANG2, true, MF2_RAILRING|MF2_DONTDRAW);
 
-			if (mo)
-				P_ColorTeamMissile(mo, player);*/
+				//player->rings--;
 		}
 
 		// Rail has no unique thrown object, therefore its sound plays here.
 		S_StartSound(player->mo, sfx_rail1);
+
+		player->rings--;
 	}
 	// Automatic
 	else if (player->currentweapon == WEP_AUTO && player->powers[pw_automaticring])
@@ -4125,7 +4189,11 @@ static void P_DoFiring(player_t *player, ticcmd_t *cmd)
 
 			// Right
 			mo = P_SPMAngle(player->mo, MT_THROWNAUTOMATIC, shotangle + ANG2, true, MF2_AUTOMATIC);
+
+			player->rings--;
 		}
+
+		player->rings--;
 	}
 	// Explosion
 	else if (player->currentweapon == WEP_EXPLODE && player->powers[pw_explosionring])
@@ -4146,7 +4214,11 @@ static void P_DoFiring(player_t *player, ticcmd_t *cmd)
 
 			// Right
 			mo = P_SPMAngle(player->mo, MT_THROWNEXPLOSION, shotangle + ANG2, true, MF2_EXPLOSION);
+
+			player->rings--;
 		}
+
+		player->rings--;
 	}
 	// Grenade
 	else if (player->currentweapon == WEP_GRENADE && player->powers[pw_grenadering])
@@ -4161,6 +4233,8 @@ static void P_DoFiring(player_t *player, ticcmd_t *cmd)
 			//P_InstaThrust(mo, player->mo->angle, FixedMul(mo->info->speed, player->mo->scale));
 			mo->fuse = mo->info->reactiontime;
 		}
+
+		player->rings--;
 	}
 	// Scatter
 	// Note: Ignores MF2_RAILRING
@@ -4194,8 +4268,37 @@ static void P_DoFiring(player_t *player, ticcmd_t *cmd)
 		player->aiming -= ANG2;
 		mo = P_SPMAngle(player->mo, MT_THROWNSCATTER, shotangle, true, MF2_SCATTER);
 
+		if (player->skin == 4) //Fang
+		{
+			if (mo)
+				shotangle = R_PointToAngle2(player->mo->x, player->mo->y, mo->x, mo->y);
+
+			// Left Down
+				player->mo->z += FixedMul(12 * FRACUNIT, player->mo->scale);
+				player->aiming += ANG1;
+				mo = P_SPMAngle(player->mo, MT_THROWNSCATTER, shotangle - ANG2, true, MF2_SCATTER);
+
+			// Right Down
+				player->mo->z += FixedMul(12 * FRACUNIT, player->mo->scale);
+				player->aiming += ANG1;
+				mo = P_SPMAngle(player->mo, MT_THROWNSCATTER, shotangle + ANG2, true, MF2_SCATTER);
+
+			// Left Up
+			//player->mo->z -= FixedMul(24 * FRACUNIT, player->mo->scale);
+			//player->aiming -= ANG2;
+			//mo = P_SPMAngle(player->mo, MT_THROWNSCATTER, shotangle - ANG2, true, MF2_SCATTER);
+
+			// Right Up
+			//player->mo->z -= FixedMul(24 * FRACUNIT, player->mo->scale);
+			//player->aiming -= ANG2;
+			//mo = P_SPMAngle(player->mo, MT_THROWNSCATTER, shotangle + ANG2, true, MF2_SCATTER);
+
+			player->rings--;
+		}
+
 		player->mo->z = oldz;
 		player->aiming = oldaiming;
+		player->rings--;
 		return;
 	}
 	// No powers, just a regular ring.
@@ -4214,7 +4317,21 @@ firenormal:
 
 			mo = P_SpawnPlayerMissile(player->mo, MT_THROWNINFINITY, 0);
 
-			player->powers[pw_infinityring]--;
+			//player->powers[pw_infinityring]--;
+
+			angle_t shotangle = player->mo->angle;
+
+			if (player->skin == 4) //Fang
+			{
+				if (mo)
+					shotangle = R_PointToAngle2(player->mo->x, player->mo->y, mo->x, mo->y);
+
+				// Left
+				mo = P_SPMAngle(player->mo, MT_THROWNINFINITY, shotangle - ANG2, true, 0);
+
+				// Right
+				mo = P_SPMAngle(player->mo, MT_THROWNINFINITY, shotangle + ANG2, true, 0);
+			}
 		}
 		// Red Ring
 		else
@@ -4225,6 +4342,30 @@ firenormal:
 
 			mo = P_SpawnPlayerMissile(player->mo, MT_REDRING, 0);
 
+			angle_t shotangle = player->mo->angle;
+
+			if (player->skin == 4) //Fang
+			{
+				if (mo)
+					shotangle = R_PointToAngle2(player->mo->x, player->mo->y, mo->x, mo->y);
+
+				// Left
+				mo = P_SPMAngle(player->mo, MT_REDRING, shotangle - ANG2, true, 0);
+
+				if (mo)
+					P_ColorTeamMissile(mo, player);
+
+				// Right
+				mo = P_SPMAngle(player->mo, MT_REDRING, shotangle + ANG2, true, 0);
+
+				if (mo)
+					P_ColorTeamMissile(mo, player);
+
+				if (mo)
+					P_ColorTeamMissile(mo, player);
+
+				player->rings--;
+			}
 			if (mo)
 				P_ColorTeamMissile(mo, player);
 
@@ -4237,7 +4378,31 @@ firenormal:
 		if (mo->flags & MF_MISSILE && mo->flags2 & MF2_RAILRING)
 		{
 			const boolean nblockmap = !(mo->flags & MF_NOBLOCKMAP);
-			for (i = 0; i < 256; i++)
+			fixed_t raillength;
+
+			switch (player->skin)
+			{
+				case 0: //Sonic
+					raillength = 36;
+					break;
+				case 1: //Tails
+					raillength = 60;
+					break;
+				case 2: //Knuckles
+					raillength = 48;
+					break;
+				case 3: //Amy
+					raillength = 48;
+					break;
+				case 4: //Fang
+					raillength = 52;
+					break;
+				case 5: //MS
+					raillength = 36;
+					break;
+			}
+
+			for (i = 0; i < raillength; i++)
 			{
 				if (nblockmap)
 				{
@@ -4252,9 +4417,10 @@ firenormal:
 				if (P_RailThinker(mo))
 					break; // mobj was removed (missile hit a wall) or couldn't move
 			}
-
 			// Other rail sound plays at contact point.
 			S_StartSound(mo, sfx_rail2);
+			//mo->scale *= 5;
+			//mo->scale /= 4;
 		}
 	}
 }
@@ -4312,9 +4478,25 @@ static void P_DoSuperStuff(player_t *player)
 			return;
 		}
 
-		player->mo->color = (player->pflags & PF_GODMODE && cv_debug == 0)
-		? (SKINCOLOR_SUPERSILVER1 + 5*(((signed)leveltime >> 1) % 7)) // A wholesome easter egg.
-		: skins[player->skin].supercolor + abs( ( (player->powers[pw_super] >> 1) % 9) - 4); // This is where super flashing is handled.
+		//player->mo->color = (player->pflags & PF_GODMODE && cv_debug == 0);
+		//? (SKINCOLOR_SUPERSILVER1 + 5 * (((signed)leveltime >> 1) % 7)) // A wholesome easter egg.
+
+		if (!player->ctfteam)
+		{
+			player->mo->color = skins[player->skin].supercolor + abs(((player->powers[pw_super] >> 1) % 9) - 4);
+		}
+		else
+		{
+			switch (player->ctfteam)
+			{
+			case 1:
+				player->mo->color = SKINCOLOR_SUPERRED1 + abs(((player->powers[pw_super] >> 1) % 9) - 4); // This is where super flashing is handled.
+				break;
+			case 2:
+				player->mo->color = SKINCOLOR_SUPERSKY1 + abs(((player->powers[pw_super] >> 1) % 9) - 4);
+				break;
+			}
+		}
 
 		G_GhostAddColor(GHC_SUPER);
 
@@ -4731,14 +4913,16 @@ static void P_DoSpinAbility(player_t *player, ticcmd_t *cmd)
 					player->dashspeed = 0;
 				}
 				break;
-			case CA2_GUNSLINGER:
+			case CA2_GUNSLINGER: //P_LookForPlayers
 				if (!player->mo->momz && onground && !player->weapondelay && canstand)
 				{
 					if (player->speed > FixedMul(10<<FRACBITS, player->mo->scale))
 					{}
 					else
 					{
+
 						mobj_t *lockon = P_LookForEnemies(player, false, true);
+
 						if (lockon)
 						{
 							if (P_IsLocalPlayer(player)) // Only display it on your own view.
@@ -4785,7 +4969,7 @@ static void P_DoSpinAbility(player_t *player, ticcmd_t *cmd)
 			case CA2_MELEE: // Melee attack
 				if (player->panim != PA_ABILITY2 && (cmd->buttons & BT_SPIN)
 				&& !player->mo->momz && onground && !(player->pflags & PF_SPINDOWN)
-				&& canstand)
+				&& !player->weapondelay && canstand)
 				{
 					P_ResetPlayer(player);
 					player->pflags |= PF_THOKKED;
@@ -4825,6 +5009,7 @@ static void P_DoSpinAbility(player_t *player, ticcmd_t *cmd)
 						S_StartSound(player->mo, sfx_s3k42);
 					}
 					player->pflags |= PF_SPINDOWN;
+					P_SetWeaponDelay(player, TICRATE / 2);
 				}
 				break;
 		}
@@ -5008,6 +5193,7 @@ void P_TwinSpinRejuvenate(player_t *player, mobjtype_t type)
 	}
 
 	player->pflags &= ~PF_THOKKED;
+	P_SetWeaponDelay(player, TICRATE / 2);
 }
 
 //
@@ -5069,6 +5255,7 @@ static void P_DoTwinSpin(player_t *player)
 	S_StartSound(player->mo, sfx_s3k42);
 	player->mo->frame = 0;
 	P_SetPlayerMobjState(player->mo, S_PLAY_TWINSPIN);
+	P_SetWeaponDelay(player, TICRATE / 2);
 }
 
 //
@@ -7781,8 +7968,8 @@ void P_ElementalFire(player_t *player, boolean cropcircle)
 			P_SetScale(flame, player->mo->scale);
 			flame->flags2 = (flame->flags2 & ~MF2_OBJECTFLIP)|(player->mo->flags2 & MF2_OBJECTFLIP);
 			flame->eflags = (flame->eflags & ~MFE_VERTICALFLIP)|(player->mo->eflags & MFE_VERTICALFLIP);
-			P_InstaThrust(flame, flame->angle, FixedMul(3*FRACUNIT, flame->scale));
-			P_SetObjectMomZ(flame, 3*FRACUNIT, false);
+			P_InstaThrust(flame, flame->angle, FixedMul(5*FRACUNIT, flame->scale)); //originally 3*FRACUNIT
+			P_SetObjectMomZ(flame, 5*FRACUNIT, false); //originally 3*FRACUNIT (5 or 6?)
 			if (!(gametyperules & GTR_FRIENDLY))
 			{
 				P_SetMobjState(flame, S_TEAM_SPINFIRE1);
@@ -9254,8 +9441,14 @@ mobj_t *P_LookForEnemies(player_t *player, boolean nonenemies, boolean bullet)
 		if ((mo->type == MT_RING_REDBOX && player->ctfteam == 2)||(mo->type == MT_RING_BLUEBOX && player->ctfteam == 1)) // ctf monitors
 			continue;
 
-		if (!((mo->flags & (MF_ENEMY|MF_BOSS|MF_MONITOR) && (mo->flags & MF_SHOOTABLE)) || (mo->flags & MF_SPRING)) == !(mo->flags2 & MF2_INVERTAIMABLE)) // allows if it has the flags desired XOR it has the invert aimable flag
+		if (!((mo->flags & (MF_ENEMY|MF_BOSS|MF_MONITOR)) || (mo->flags & MF_SPRING) || (mo->type == MT_PLAYER)) == !(mo->flags2 & MF2_INVERTAIMABLE)) // allows if it has the flags desired XOR it has the invert aimable flag
 			continue; // not a valid target
+
+		if ((mo->type == MT_PLAYER) && (mo->player->ctfteam == player->ctfteam))
+			continue;
+
+		//if ((mo->type == MT_PLAYER) && (mo->player->powers[pw_super]) || (mo->player->powers[pw_super])) //Better idea
+			//continue;
 
 		if (mo == player->mo)
 			continue;
@@ -9297,9 +9490,6 @@ mobj_t *P_LookForEnemies(player_t *player, boolean nonenemies, boolean bullet)
 		&& abs(player->mo->y-mo->y) > player->mo->radius)
 			continue; // not in your 2d plane
 
-		if (mo->type == MT_PLAYER) // Don't chase after other players!
-			continue;
-
 		if (closestmo && dist > closestdist)
 			continue;
 
@@ -9316,6 +9506,78 @@ mobj_t *P_LookForEnemies(player_t *player, boolean nonenemies, boolean bullet)
 	return closestmo;
 }
 
+//
+// P_FangSenses
+// Dont Laugh
+//
+/*mobj_t* P_FangSenses(player_t* player, boolean nonenemies, boolean bullet)
+{
+	mobj_t* mo;
+	thinker_t* think;
+	mobj_t* closestmo = NULL;
+	const fixed_t maxdist = FixedMul((bullet ? RING_DIST * 2 : RING_DIST), player->mo->scale);
+	const angle_t span = (bullet ? ANG30 : ANGLE_90);
+	fixed_t dist, closestdist = 0;
+	const mobjflag_t nonenemiesdisregard = (bullet ? 0 : MF_MONITOR) | MF_SPRING;
+
+	for (think = thlist[THINK_MOBJ].next; think != &thlist[THINK_MOBJ]; think = think->next)
+	{
+
+		if (mo->health <= 0) // dead
+			continue;
+
+		if (mo == player->mo)
+			continue;
+
+		if (think->function.acp1 == (actionf_p1)P_RemoveThinkerDelayed)
+			continue;
+
+		mo = (mobj_t*)think;
+
+		{
+			fixed_t zdist = (player->mo->z + player->mo->height / 2) - (mo->z + mo->height / 2);
+			dist = P_AproxDistance(player->mo->x - mo->x, player->mo->y - mo->y);
+			if (bullet)
+			{
+				if ((R_PointToAngle2(0, 0, dist, zdist) + span) > span * 2)
+					continue; // Don't home outside of desired angle!
+			}
+			else // Don't home upwards!
+			{
+				if (player->mo->eflags & MFE_VERTICALFLIP)
+				{
+					if (mo->z + mo->height < player->mo->z + player->mo->height - FixedMul(MAXSTEPMOVE, player->mo->scale))
+						continue;
+				}
+				else if (mo->z > player->mo->z + FixedMul(MAXSTEPMOVE, player->mo->scale))
+					continue;
+			}
+
+			dist = P_AproxDistance(dist, zdist);
+			if (dist > maxdist)
+				continue; // out of range
+		}
+
+		if ((twodlevel || player->mo->flags2 & MF2_TWOD)
+			&& abs(player->mo->y - mo->y) > player->mo->radius)
+			continue; // not in your 2d plane
+
+		if (closestmo && dist > closestdist)
+			continue;
+
+		if ((R_PointToAngle2(player->mo->x + P_ReturnThrustX(player->mo, player->mo->angle, player->mo->radius), player->mo->y + P_ReturnThrustY(player->mo, player->mo->angle, player->mo->radius), mo->x, mo->y) - player->mo->angle + span) > span * 2)
+			continue; // behind back
+
+		if (!P_CheckSight(player->mo, mo))
+			continue; // out of sight
+
+		closestmo = mo;
+		closestdist = dist;
+	}
+
+	return closestmo;
+}*/
+
 boolean P_HomingAttack(mobj_t *source, mobj_t *enemy) // Home in on your target
 {
 	fixed_t zdist;
@@ -9329,6 +9591,9 @@ boolean P_HomingAttack(mobj_t *source, mobj_t *enemy) // Home in on your target
 		return false;
 
 	if (enemy->health <= 0) // dead
+		return false;
+
+	if ((enemy->type == MT_RING_REDBOX && source->player->ctfteam == 2) || (enemy->type == MT_RING_BLUEBOX && source->player->ctfteam == 1)) // ctf monitors
 		return false;
 
 	if (source->player && (!((enemy->flags & (MF_ENEMY|MF_BOSS|MF_MONITOR) && (enemy->flags & MF_SHOOTABLE)) || (enemy->flags & MF_SPRING)) == !(enemy->flags2 & MF2_INVERTAIMABLE))) // allows if it has the flags desired XOR it has the invert aimable flag
